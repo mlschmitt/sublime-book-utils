@@ -4,21 +4,29 @@ class SelectWordsCommand(sublime_plugin.TextCommand):
 
     MIN_WORD_LIMIT = 100
     SECTION_DIVIDER = "#"
-	
+    
     def run(self, edit):
         self.view.sel().clear()
 
-		# Remove empty text at beginning
-        region = sublime.Region(0, self.view.size())
+        # Remove empty text at beginning
+        size = self.view.size()
+        region = sublime.Region(0, size)
         if not region.empty():
+            letters_in = 0
             doc_text = self.view.substr(region)
-            doc_text = doc_text.strip()
-            self.view.replace(edit, region, doc_text)
+            for character_count, letter in enumerate(doc_text):
+                if letter.strip() == "":
+                    letters_in += 1
+                    continue
+                else:
+                    break
+            if letters_in > 0:
+                region = sublime.Region(0, letters_in)
+                self.view.erase(edit, region)
+                size = self.view.size()
+                region = sublime.Region(0, size)
 
-
-		# Get all text
-        region = sublime.Region(0, self.view.size())
-        if not region.empty():
+            # Select text up to next divider
             doc_text = self.view.substr(region)
             character_count = 0
             word_count = 0
@@ -29,7 +37,7 @@ class SelectWordsCommand(sublime_plugin.TextCommand):
                     word_count += 1
 
             # Don't try to select more than the entire document
-            character_count = min(character_count, self.view.size())
+            character_count = min(character_count, size)
 
             region = sublime.Region(0, character_count)
             doc_text = self.view.substr(region).strip()
